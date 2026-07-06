@@ -10,7 +10,7 @@
 
 \title{\LARGE
     Final Report Template\\
-    Distributed Monopoly
+    DS-Monopoly
 }
 \subtitle{Final Report for the Distributed Systems Course [2025/2026]}
 
@@ -29,7 +29,15 @@
 \maketitle
 
 \begin{abstract}
-    Up to $\sim$2000 characters briefly describing the project.
+  DS-Monopoly is a distributed clone of the Monopoly board game.
+    It is a simplified version of the game where a centralized server acts as the \textit{bank},
+  it coordinates the game and keeps the game state, validates actions, prevents cheating and
+  broadcasts the updates to all the connected clients.
+  The clients are \textit{players} that can join a game by connecting to the central server (2 to 4 players per game).
+  Players can buy properties or houses, roll dice and see the board and the players information from a GUI.
+  Disconnections from both sides, clients and server, are handled in order to keep the game running.
+  Features like checkpointing, authentication and timeouts, are used to enhance fault tolerance and
+  ensure more reliability and availability.
 \end{abstract}
 
 \section*{Disclaimer (if needed)}
