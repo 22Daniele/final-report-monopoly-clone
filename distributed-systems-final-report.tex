@@ -86,41 +86,77 @@ The state is kept only on the server that acts as a single source of truth, avoi
 Furthermore, the failure of a client does not interrupt the game, but it can be continued by the other players connected.
 
 \section{Requirements Elicitation and Analysis}\label{requirements}
+\subsection{Functional requirements}\label{functional_requirements}
 
 \begin{itemize}
-  \item The requirements must explain \textbf{what} (not how) the software
-  being produced should do.
-  %
-  \begin{itemize}
-    \item you should not focus on the particular problems, but exclusively on
-    what you want the application to do.
-  \end{itemize}
-
-  \item Requirements must be clearly identified, and possibly numbered
-
-  \item Requirements are divided into:
-  %
-  \begin{itemize}
-    \item \textbf{Functional}: some functionality the software should provide to the user
-
-    \item \textbf{Non-functional}: requirements that do not directly concern behavioural aspects, such as consistency, availability, etc.
-
-    \item \textbf{Implementation}: constrain the entire phase of system realization, 
-    for instance by requiring the use of a specific programming language and/or a specific software tool
-    %
+    \item \textbf{Server Initialization:} The server should expose and print its endpoint (IP and port) upon startup.
     \begin{itemize}
-      \item these constraints should be adequately justified by political / economic / administrative reasons\ldots{}
-      \item \ldots{} otherwise, implementation choices should emerge \emph{as  a consequence of} design
+        \item \textit{Acceptance Criterion:} Running the server application outputs its endpoint on the CLI.
     \end{itemize}
-  \end{itemize}
 
-  \item If there are domain-specific terms, these should be explained in a glossary
-  
-  \item Each requirement must have its own \textbf{acceptance criterion}
-  %
-  \begin{itemize}
-    \item these will be important for the validation phase
-  \end{itemize}
+    \item \textbf{Client Connection:} Clients should be able to connect to the server using the provided endpoint and an available nickname, opening a GUI lobby.
+    \begin{itemize}
+        \item \textit{Acceptance Criterion:} A user entering a valid IP, port, and unique nickname successfully joins the lobby and sees the GUI.
+    \end{itemize}
+
+    \item \textbf{Game Start Condition:} The game should start only when at least two players are in the lobby and all connected players pressed \textit{"ready"}.
+    \begin{itemize}
+        \item \textit{Acceptance Criterion:} The game goes from lobby to playing state immediately after the last player clicks the ready button.
+    \end{itemize}
+
+    \item \textbf{Turn Management:} The system should have a turn-based logic, each player can only do the actions they are allowed to do during their specific turn.
+    \begin{itemize}
+        \item \textit{Acceptance Criterion:} A player cannot click \textit{"roll dice"} or \textit{"buy"} if it is not their turn or if the action is invalid for their current state.
+    \end{itemize}
+
+    \item \textbf{Game State Visualization:} The GUI should display the game board, player information (balance, properties), and the last game event.
+    \begin{itemize}
+        \item \textit{Acceptance Criterion:} Whenever an action is performed, the GUI immediately updates the board, the balances, and the event log for all connected players.
+    \end{itemize}
+
+    \item \textbf{Client Disconnection Handling:} If a client disconnects, the game should pause and grant the disconnected player 30 seconds to rejoin.
+    \begin{itemize}
+        \item \textit{Acceptance Criterion:} A disconnection triggers a 30-second timer; if the player reconnects in time, the game resume. Otherwise, the player goes bankrupt.
+    \end{itemize}
+
+    \item \textbf{Server Disconnection Handling:} If the server fails, clients should wait up to 90 seconds for it to restart before shutting down.
+    \begin{itemize}
+        \item \textit{Acceptance Criterion:} Shutting down the server triggers a 90-second waiting state on all active clients.
+    \end{itemize}
+
+    \item \textbf{Winning Condition:} The game should end when only one player remains active and not in bankruptcy.
+    \begin{itemize}
+        \item \textit{Acceptance Criterion:} When all the players, except one, declare bankruptcy or disconnect permanently, the system declares the remaining player the winner.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Non-functional requirements}\label{non_functional_requirements}
+
+\begin{itemize}
+    \item \textbf{Consistency:} The system should ensure state consistency across all connected nodes at any given time.
+    \begin{itemize}
+        \item \textit{Acceptance Criterion:} The players GUI's will always show the exact same data.
+    \end{itemize}
+    \item \textbf{Security:} The system should prevent clients from doing invalid game actions.
+    \begin{itemize}
+        \item \textit{Acceptance Criterion:} Any altered or malicious payload sent by a client is rejected by the server without affecting the game state.
+    \end{itemize}
+    \item \textbf{Availability and Fault Tolerance:} The system should be able to recover its exact previous state following a critical node failure.
+    \begin{itemize}
+        \item \textit{Acceptance Criterion:} Restarting the server after a simulated crash allows clients to reconnect and find the board, balances, and turn order exactly as they were before the crash.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Implementation requirements}\label{implementation_requirements}
+
+\begin{itemize}
+    \item \textbf{Programming Language:} The system is developed using Python.
+    \item \textbf{Networking Protocol:} The communication between client and server is
+                                              implemented using TCP sockets to ensure reliable delivery.
+    \item \textbf{Data Format:} Nodes exchange information using the JSON format.
+    \item \textbf{GUI Library:} The client's graphical interface is built using the PyGame library.
+    \item \textbf{Containerization:} The server can be started using Docker Compose to facilitate
+                                            automatic restarts and environment consistency.
 \end{itemize}
 
 \subsection{Relevant Distributed System Features}
