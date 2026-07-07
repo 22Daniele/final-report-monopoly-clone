@@ -162,65 +162,43 @@ Furthermore, the failure of a client does not interrupt the game, but it can be 
 \subsection{Relevant Distributed System Features}
 \label{ds-features}
 
-Motivate which distributed system features are relevant for your project, and which are not.
-%
 \begin{itemize}
-  \item transparency
-  \begin{itemize}
-    \item does your system need to hide distribution details from users or developers?
-    \item is it important that failures, location, or replication are invisible?
-  \end{itemize}
+  \item \textbf{Transparency:}
+  The clients only need a single network endpoint (IP and port) to interact with the service,
+  the internal server hosting details are hidden.
+  However, full transparency (such as failure or replication transparency) is not a primary goal;
+  failures and reconnection states are explicitly made visible to the players via the GUI to manage expectations during network drops.
 
-  \item fault tolerance, dependability -- availability, reliability, integrity, maintainability, safety
-  \begin{itemize}
-    \item what happens if a component fails? is uninterrupted service required?
-    \item is data loss or corruption unacceptable?
-    \item how quickly must the system recover from faults?
-  \end{itemize}
+  \item \textbf{Fault Tolerance and Dependability:}
+  If a client fails, recovery systems try to reestablish all the connection and resume the game.
+  The server needs to be active for the entire game, but, if a failure occurs,
+  it should be able to reload the game state from the last saved checkpoint.
+  The checkpoint must be available and not corrupted in order to be used in a server reconnection.
+  The reconnections timeouts are 30 seconds for the clients and 90 seconds for the server.
+  When a client fails, the reconnection timeout should restart also for the other disconnected players.
 
-  \item scalability
-  \begin{itemize}
-    \item will the system need to handle increasing numbers of users, requests, or data?
-    \item is it expected to grow over time?
-  \end{itemize}
+  \item \textbf{Scalability:}
+  At the moment a server can handle one single game concurrently.
+  The system could need to handle an increasing number of users when more lobbies can be created on a single server.
+  The amount of data handled should be more or less the same even if the complexity of the game increases as the actual real game is.
+  Each game is independent, so at the end of the game everything is reset.
 
-  \item security, trust
-  \begin{itemize}
-    \item is sensitive data being processed or stored?
-    \item are there multiple user roles with different permissions?
-    \item is authentication or authorization required?
-  \end{itemize}
 
-  \item resource sharing
-  \begin{itemize}
-    \item do multiple users or components need access to shared resources?
-    \item is coordination or synchronization needed?
-  \end{itemize}
+  \item \textbf{Security and Trust:}
+  The only data stored are the checkpoint on server's side and the token file for authentication on client's side.
+  Cheating is prevented by having a centralized server, clients can only read the serialized game state and cannot communicate to other clients.
+  Every player has the same permission.
+  The authentication is needed for guarantee that a player that reconnects to a game after
+  a failure is the exact same player that was playing before the failure occurred.
 
-  \item openness, interoperability, heterogeneity of components
-  \begin{itemize}
-    \item Will your system interact with external systems or use components built with different technologies?
-    \item Is standardization or compatibility important?
-  \end{itemize}
+  \item \textbf{Resource Sharing:}
+  The central shared resource is the global \textit{Game State}.
+  The server coordinates and synchronize the process, it handles the incoming events from clients,
+  updates the game state and broadcasts it to the connected peers.
 
-  \item evolvability, maintainability
-  \begin{itemize}
-    \item Will the system need to be updated or extended after deployment?
-    \item Is long-term maintenance a concern?
-  \end{itemize}
-
-  \item performance, concurrency, computation / communication efficiency, bandwidth
-  \begin{itemize}
-    \item Are there strict requirements on response time or throughput?
-    \item Will many operations happen in parallel?
-    \item Is network usage a concern?
-  \end{itemize}
-
-  \item economy, costs  
-  \begin{itemize}
-    \item Are there budget constraints for development, deployment, or operation?
-    \item Is minimizing resource usage important?
-  \end{itemize}
+  \item \textbf{Communication Efficiency and Bandwidth:}
+  The game is turn-based, there is no need to have an instant update from the server.
+  All the data sent on the network has almost the same size, from the server is the game state and from the clients the events they generate.
 \end{itemize}
 
 \section{Design}\label{design}
