@@ -4,7 +4,6 @@
 \usepackage{url}
 \usepackage{natbib}
 \usepackage{graphicx}
-\usepackage{plantuml}
 \usepackage{cleveref} % this must be the last package to be loaded
 
 \newcommand{\emailaddr}[1]{\href{mailto:#1}{\texttt{#1}}}
@@ -228,66 +227,43 @@ This choice was made to ensure different requirements and features identified in
 
 \subsection{Infrastructure}\label{infrastructure}
 
-The system is composed by two main
+The system architecture follows a classic Client-Server model.
+The infrastructure is designed to be lightweight, avoiding external dependencies such as dedicated databases, message brokers, or load balancers.
+
+\subsubsection{Infrastructural Components}
+The system has the following infrastructural components:
 \begin{itemize}
-  \item are there \emph{infrastructural components} that need to be introduced? \emph{how many}?
-  %
-  \begin{itemize}
-    \item e.g.~\emph{clients}, \emph{servers}, \emph{load balancers},
-    \emph{caches}, \emph{databases}, \emph{message brokers},
-    \emph{queues}, \emph{workers}, \emph{proxies}, \emph{firewalls},
-    \emph{CDNs}, \emph{etc.}
-  \end{itemize}
-
-  \item how do components \emph{distribute} over the network? \emph{where}?
-  %
-  \begin{itemize}
-    \item e.g.~do servers / brokers / databases / etc. sit on the same
-    machine? on the same network? on the same datacenter? on the same
-    continent?
-  \end{itemize}
-
-  \item how do components \emph{find} each other?
-  %
-  \begin{itemize}
-    \item how to \emph{name} components?
-    \item e.g.~DNS, \emph{service discovery}, \emph{load balancing},
-    \emph{etc.}
-  \end{itemize}
+    \item \textbf{Central Server (1 instance):} It acts as the game coordinator and the single source of truth.
+        It manages connections, holds the authoritative game state in-memory, validates actions, and broadcasts updates to the connected peers.
+    \item \textbf{Game Clients (2 to 4 instances):} These represent the end-users.
+        They are responsible for rendering the graphical user interface (GUI) and forwarding user inputs to the server.
+        Clients do not communicate with each other directly, all traffic passes through the server.
+    \item \textbf{Storage (Local File System):} Instead of a traditional database, the server uses the host's local file system
+        to store checkpoints (\texttt{autosave.json}) and the clients use it to store authentication tokens.
+        This ensures fault tolerance and session recovery without the overhead of maintaining a database server.
 \end{itemize}
 
-\begin{quote}
-Component diagrams are welcome here
-\end{quote}
+\subsubsection{Network Distribution}
+The components are designed to be distributed over the network.
+The server and clients typically run on different machines.
+The server binds to the machine's local IP, and clients connect over the network using standard TCP sockets.
+
+\subsubsection{Component Discovery}
+The system relies on explicit endpoint provisioning:
+\begin{enumerate}
+    \item Upon startup, the Server inspects its network interfaces and logs its binding endpoints (IP addresses and port) to the terminal.
+    \item The end-users explicitly provide the target IP and port to their Client application upon launch.
+    \item Once connected, the server assigns a unique authentication token to the client, guaranteeing safe reconnection to the session even if the IP changes dynamically.
+\end{enumerate}
+
+\vspace{0.5cm}
 \begin{figure}[h]
     \centering
-    \begin{plantuml}
-    @startuml
-    skinparam componentStyle uml2
-
-    node "SERVER" {
-      [Coordinator] as coord
-    }
-
-    node "PLAYER 1" {
-      actor "User 1" as u1
-      [Terminal 1] as t1
-      u1 .right. t1
-    }
-
-    node "PLAYER 2" {
-      [Terminal 2] as t2
-      actor "User 2" as u2
-      t2 .right. u2
-    }
-
-    coord <--> t1
-    coord <--> t2
-    @enduml
-    \end{plantuml}
-    \caption{Diagramma architetturale con PlantUML}\label{fig:figure}
+    \includegraphics[width=0.8\textwidth]{figures/components}
+    \caption{Component diagram of the Monopoly system.}
+    \label{fig:infrastructure}
 \end{figure}
-
+\vspace{0.5cm}
 
 \subsection{Modelling}\label{modelling}
 
