@@ -4,6 +4,7 @@
 \usepackage{url}
 \usepackage{natbib}
 \usepackage{graphicx}
+\usepackage{plantuml}
 \usepackage{cleveref} % this must be the last package to be loaded
 
 \newcommand{\emailaddr}[1]{\href{mailto:#1}{\texttt{#1}}}
@@ -44,7 +45,7 @@
 \section*{Disclaimer}
 
 During the preparation of this work, the author used Gemini to assist in coding the graphical user interface
-with PyGame for the clients and to accelerate the development of some small functions and code refactoring.
+with PyGame for the clients, the unit tests and to accelerate the development of some small functions and code refactoring.
 It was not used to design the project's architecture nor to write the final report.
 
 After using this tool/service, 
@@ -192,9 +193,11 @@ Furthermore, the failure of a client does not interrupt the game, but it can be 
   a failure is the exact same player that was playing before the failure occurred.
 
   \item \textbf{Resource Sharing:}
-  The central shared resource is the global \textit{Game State}.
+  The \textit{game state} is the resource kept by the central server.
   The server coordinates and synchronize the process, it handles the incoming events from clients,
   updates the game state and broadcasts it to the connected peers.
+  The clients cannot access the \textit{game state} directly, they cannot read it or modify it directly,
+  but they can only generate events that the server elaborates in order to modify and send the \textit{game state}.
 
   \item \textbf{Communication Efficiency and Bandwidth:}
   The game is turn-based, there is no need to have an instant update from the server.
@@ -203,30 +206,29 @@ Furthermore, the failure of a client does not interrupt the game, but it can be 
 
 \section{Design}\label{design}
 
-This chapter explains the strategies used to meet the requirements identified in the analysis. 
-%
-Ideally, the design should be the same, regardless of the technological choices made during the implementation phase.
-
-\begin{quote}
-You can re-arrange the sections as you prefer, but all the sections must be present in the end
-\end{quote}
-
-\noindent
-\textbf{Important:} try to motivate your design choices in relation to the requirements and features identified 
-in \cref{requirements} and \cref{ds-features}.
+This chapter explains the strategies used to meet the requirements identified in the analysis.
 
 \subsection{Architecture}\label{architecture}
+The system adopts a \textbf{Client-Server} architecture.
+The central server acts as the manager of the game logic and the single source of truth for the shared game state.
+On the other hand the clients responsibilities are rendering the Graphical User Interface (GUI),
+capturing player inputs, and forwarding the events to the server.
 
+
+This choice was made to ensure different requirements and features identified in Section\ref{requirements} and Section\ref{ds-features}:
 \begin{itemize}
-  \item Which architectural style?
-  %
-  \begin{itemize}
-    \item why?
-  \end{itemize}
+    \item \textbf{Security and Anti-Cheating:} By establishing an authoritative server, clients cannot manipulate the game.
+    The server strictly validates every requested action against the game rules before applying it and broadcasting the result.
+    \item \textbf{Consistency:} In a turn-based board game, all players must observe the exact same state simultaneously.
+    A centralized server resolves concurrency issues, processing incoming events sequentially and ensuring that no state divergence occurs among the connected nodes.
+    \item \textbf{Network and Algorithmic Simplicity:} A P2P architecture would have required a fully connected mesh network and
+    complex distributed consensus algorithms just to agree on simple game events like dice roll or a property purchase.
+    The Client-Server model drastically reduces network overhead and algorithmic complexity.
 \end{itemize}
 
 \subsection{Infrastructure}\label{infrastructure}
 
+The system is composed by two main
 \begin{itemize}
   \item are there \emph{infrastructural components} that need to be introduced? \emph{how many}?
   %
@@ -257,6 +259,35 @@ in \cref{requirements} and \cref{ds-features}.
 \begin{quote}
 Component diagrams are welcome here
 \end{quote}
+\begin{figure}[h]
+    \centering
+    \begin{plantuml}
+    @startuml
+    skinparam componentStyle uml2
+
+    node "SERVER" {
+      [Coordinator] as coord
+    }
+
+    node "PLAYER 1" {
+      actor "User 1" as u1
+      [Terminal 1] as t1
+      u1 .right. t1
+    }
+
+    node "PLAYER 2" {
+      [Terminal 2] as t2
+      actor "User 2" as u2
+      t2 .right. u2
+    }
+
+    coord <--> t1
+    coord <--> t2
+    @enduml
+    \end{plantuml}
+    \caption{Diagramma architetturale con PlantUML}\label{fig:figure}
+\end{figure}
+
 
 \subsection{Modelling}\label{modelling}
 
