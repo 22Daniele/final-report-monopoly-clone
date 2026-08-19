@@ -260,75 +260,59 @@ The system relies on explicit endpoint provisioning:
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.8\textwidth]{figures/components}
-    \caption{Component diagram of the Monopoly system.}
+    \caption{Component diagram of the Monopoly system with two players.}
     \label{fig:infrastructure}
 \end{figure}
 \vspace{0.5cm}
 
 \subsection{Modelling}\label{modelling}
 
+\subsubsection*{Domain Entities}
+The primary domain entities are:
 \begin{itemize}
-  \item which \textbf{domain entities} are there?
-  %
-  \begin{itemize}
-    \item e.g.~\emph{users}, \emph{products}, \emph{orders}, \emph{etc.}
-  \end{itemize}
-  
-  \item how do \emph{domain entities} \textbf{map to} \emph{infrastructural components}?
-  %
-  \begin{itemize}
-    \item e.g.~state of a video game on central server, while inputs/representations on clients
-    \item e.g.~where to store messages in an IM app? for how long?
-  \end{itemize}
-
-  \item which \textbf{domain events} are there?
-  %
-  \begin{itemize}
-    \item e.g.~\emph{user registered}, \emph{product added to cart}, \emph{order placed}, \emph{etc.}
-  \end{itemize}
-  
-  \item which sorts of \textbf{messages} are exchanged?
-  %
-  \begin{itemize}
-    \item e.g.~\emph{commands}, \emph{events}, \emph{queries}, \emph{etc.}
-  \end{itemize}
-
-  \item what information does the \textbf{state} of the system comprehend
-  %
-  \begin{itemize}
-    \item e.g.~\emph{users' data}, \emph{products' data}, \emph{orders' data}, \emph{etc.}
-  \end{itemize}
+    \item \textbf{\texttt{Monopoly}:} The root entity representing the game session, managing the lifecycle (lobby, playing, paused, closed), turns, and the list of players.
+    \item \textbf{\texttt{Player}:} Represents a user in the game. It holds personal state such as balance, board position, owned properties, and bankruptcy status.
+    \item \textbf{\textbf{\texttt{Board}} \& \textbf{\texttt{Space}}:} The physical representation of the game. The Board is an aggregate of multiple Spaces, which are divided into \texttt{PropertySpace} (can be bought, owned, and upgraded with houses) and \texttt{ActionSpace} (trigger special events like Taxes, Jail, or Chance cards).
 \end{itemize}
 
-\begin{quote}
-Class diagram are welcome here
-\end{quote}
-
-\subsection{Interaction}\label{interaction}
-
+\subsubsection*{Mapping to Infrastructural Components}
 \begin{itemize}
-  \item how do components \emph{communicate}? \emph{when}? \emph{what}?
-  \item \emph{which} \textbf{interaction patterns} do they enact?
+    \item The true, mutable \textbf{state of the domain entities} resides entirely in the memory of the central server (\texttt{MonopolyBank}).
+    \item The server periodically save the state to the local file system via the Checkpointing module.
+    \item The clients (\texttt{MonopolyUser}) only receive a serialized representation (a JSON dictionary) of the state. Clients render the representation visually and collect user inputs.
 \end{itemize}
 
-\begin{quote}
-Sequence diagrams are welcome here
-\end{quote}
-
-\subsection{Behaviour}\label{behaviour}
-
+\subsubsection*{Domain Events}
+In this architecture the domain events are modeled by the \texttt{PlayerEvent} enumeration:
 \begin{itemize}
-  \item how does \emph{each} component \textbf{behave} individually (e.g.~in \emph{response} to \emph{events} or messages)?
-  \begin{itemize}
-    \item some components may be \emph{stateful}, others \emph{stateless}
-  \end{itemize}
-
-  \item which components are in charge of updating the \textbf{state} of the system? \emph{when}? \emph{how}?
+    \item \textbf{Lifecycle Events:} \texttt{JOIN}, \texttt{READY}, \texttt{DISCONNECTION}, \texttt{RECONNECTION\_TIMEOUT}, \texttt{QUIT}.
+    \item \textbf{Gameplay Events:} \texttt{ROLL} (moves the player and evaluates the landing space), \texttt{BUY} (purchases a property), \texttt{BUILD} (adds a house), \texttt{END\_TURN} (shifts the turn to the next player).
 \end{itemize}
 
-\begin{quote}
-State diagrams are welcome here
-\end{quote}
+\subsubsection*{Exchanged Messages}
+Communication between components relies on asynchronous JSON messages over TCP, categorized into:
+\begin{itemize}
+    \item \textbf{Events (Client $\rightarrow$ Server):} Sent by the user. They contain the event type and a payload (e.g., \texttt{\{"type": "roll", "payload": \{"nickname": "Alice"\}\}}).
+    \item \textbf{State Updates (Server $\rightarrow$ Client):} The server responds to valid commands by broadcasting the entire updated, serialized game state to all connected peers.
+\end{itemize}
+
+\subsubsection*{System State Comprehension}
+The global state of the system encapsulates all the information required to resume or render the game at any exact moment. It comprehends:
+\begin{itemize}
+    \item \textbf{Game Data:} Current status (LOBBY, PLAYING, PAUSED, CLOSED), active turn index, \texttt{has\_rolled} flags, and a list of allowed actions for the current UI generation.
+    \item \textbf{Players' Data:} Nicknames, board positions, balances, and boolean flags for bankruptcy.
+    \item \textbf{Board Data:} The structural layout of the spaces, including dynamic data like the \texttt{owner} of each property and the number of \texttt{houses} built on them.
+    \item \textbf{Network State:} Sets of ready players and sets of temporarily disconnected players waiting for reconnection.
+\end{itemize}
+
+\vspace{0.5cm}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/model_diagram}
+    \caption{Class diagram of the model's main components.}
+    \label{fig:model class diagram}
+\end{figure}
+\vspace{0.5cm}
 
 \subsection{Data and Consistency Issues}\label{data-and-consistency-issues}
 
