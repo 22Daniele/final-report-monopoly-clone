@@ -321,13 +321,15 @@ that is the serialized JSON format of the actual state of the game including pla
 
 
 The checkpoint is a file (\texttt{autosave.json}) where all the useful information needed to restore the game state in case of a server fail are saved.
-It comprehends the serialized state of the game (players, turn, board \ldots) and the players token.
+It comprehends the serialized state of the game (players, balances, board ownerships, current turn)
+along with the dictionary mapping player nicknames to their authentication tokens and the players token.
 When the server starts it checks if a valid checkpoint is available and loads it.
 During the game, on each event the server updates a checkpoint.
 
 
 The players token are stored during the joining phase of a player (\texttt{nickname\_token.txt}).
-They are then used after a reconnection from a player by checking if the token provided by the user is the same of the token saved
+It contains a unique UUID generated upon the first connection that is
+used after a reconnection from a player by checking if the token provided by the user is the same of the token saved
 on the server.
 
 
@@ -336,9 +338,11 @@ while the tokens file are stored on the clients machines.
 
 
 There is no concurrency in reading and writing these data, each file is managed by the owner's machine clients or server.
-If these files gets corrupted or lost, game cannot be restored without checkpoint or disconnected players cannot rejoin without token.
 There is a single copy of them, there isn't a backup, and they are not shared between nodes.
-This increase the consistency at the cost of availability and fault tolerance.
+By relying on single local files without backups or distributed replication, the system achieves
+\textbf{Strong Consistency} (there is a single source of truth).
+The cost of this design is reduced \textit{Availability} and \textit{Fault Tolerance}: the files act as a Single Point of Failure.
+If the server's disk fails or the file gets corrupted, the game cannot be restored.
 
 
 Data must be consistent across the network to ensure the game works properly:
@@ -349,26 +353,30 @@ Data must be consistent across the network to ensure the game works properly:
 
 
 \subsection{Fault-Tolerance}\label{fault-tolerance}
+The system is designed to handle the most common issues in multiplayer games: network drops, client disconnections, and unexpected server crashes.
+\subsubsection{Data replication}
+The only data replicated are the players token that are stored both on server and client, but it is needed only for
+the authorization of a player to join a started game by checking if they are the same,
+it cannot be used to restore a lost or corrupted data.
+Tokens must be consistent in order to guarantee a right form of authentication during a client reconnection,
+otherwise if one of the file is corrupted the authentication can fail and an allowed user cannot rejoin the game.
 
+\subsubsection{Timeouts and Retry Mechanisms}
+The system implements timeout and retry loops to handle temporary network failures, preventing immediate game disruption:
 \begin{itemize}
-  \item Is there any form of data \textbf{replication} / federation / sharing?
-  %
-  \begin{itemize}
-    \item \emph{why}? \emph{how} does it work?
-  \end{itemize}
-  
-  \item Is there any \textbf{heart-beating}, \textbf{timeout}, \textbf{retry mechanism}?
-  %
-  \begin{itemize}
-    \item \emph{why}? \emph{among} which components? \emph{how} does it work?
-  \end{itemize}
-  
-  \item Is there any form of \textbf{error handling}?
-  %
-  \begin{itemize}
-    \item \emph{what} happens when a component fails? \emph{why}? \emph{how}?
-  \end{itemize}
+    \item \textbf{Server:} once the server lose connection a 90-second timeout starts.
+    During this period of time if the connection is restored, the game restarts loading the last checkpoint saved.
+    The game is set to \texttt{"CLOSED"} once the timeout ends.
+    \item \textbf{Client:} once the client lose connection a 30-second timeout starts.
+    During this period of time if the connection is restored, the game restarts.
+    The player is set to \texttt{"bankruptcy"} once the timeout ends.
 \end{itemize}
+
+
+\subsubsection{Error handling}
+The system uses TCP sockets for connections, so if a message fails to reach the peer, the exception is caught and the retry mechanisms starts.
+If an error occurs during the joining phase the connection gets refused and a log is displayed on client's and server's CLI.
+Errors that occurs in game are shown in the last event box on the GUI.
 
 \subsection{Availability}\label{availability}
 
