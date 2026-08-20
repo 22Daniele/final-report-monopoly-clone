@@ -316,33 +316,37 @@ The global state of the system encapsulates all the information required to resu
 
 \subsection{Data and Consistency Issues}\label{data-and-consistency-issues}
 
+The only data that needs to be stored are the checkpoint of the model,
+that is the serialized JSON format of the actual state of the game including players token, and the players token.
+
+
+The checkpoint is a file (\texttt{autosave.json}) where all the useful information needed to restore the game state in case of a server fail are saved.
+It comprehends the serialized state of the game (players, turn, board \ldots) and the players token.
+When the server starts it checks if a valid checkpoint is available and loads it.
+During the game, on each event the server updates a checkpoint.
+
+
+The players token are stored during the joining phase of a player (\texttt{nickname\_token.txt}).
+They are then used after a reconnection from a player by checking if the token provided by the user is the same of the token saved
+on the server.
+
+
+Both files are stored in the local filesystem, the checkpoint is stored on the server machine,
+while the tokens file are stored on the clients machines.
+
+
+There is no concurrency in reading and writing these data, each file is managed by the owner's machine clients or server.
+If these files gets corrupted or lost, game cannot be restored without checkpoint or disconnected players cannot rejoin without token.
+There is a single copy of them, there isn't a backup, and they are not shared between nodes.
+This increase the consistency at the cost of availability and fault tolerance.
+
+
+Data must be consistent across the network to ensure the game works properly:
 \begin{itemize}
-  \item Is there any data that needs to be stored?
-  %
-  \begin{itemize}
-    \item \emph{what} data? \emph{where}? \emph{why}?
-  \end{itemize}
-  
-  \item how should \emph{persistent data} be \textbf{stored}?
-  %
-  \begin{itemize}
-    \item e.g.~relations, documents, key-value, graph, etc.
-    \item why?
-  \end{itemize}
-  
-  \item Which components perform queries on the database?
-  %
-  \begin{itemize}
-    \item \emph{when}? \emph{which} queries? \emph{why}?
-    \item concurrent read? concurrent write? why?
-  \end{itemize}
-  
-  \item Is there any data that needs to be shared between components?
-  %
-  \begin{itemize}
-    \item \emph{why}? \emph{what} data?
-  \end{itemize}
+    \item \textbf{Game State Sharing:} The server broadcasts the updated JSON state to all clients after every action so they can render the view synchronously.
+    \item \textbf{Token Consistency:} The token provided by the client during a reconnection must strictly match the token saved in the server's checkpoint. If they are inconsistent, access is denied.
 \end{itemize}
+
 
 \subsection{Fault-Tolerance}\label{fault-tolerance}
 
