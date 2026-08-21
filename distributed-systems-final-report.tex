@@ -380,49 +380,43 @@ Errors that occurs in game are shown in the last event box on the GUI.
 
 \subsection{Availability}\label{availability}
 
+In the context of the CAP theorem, when a \textbf{network partition} occurs,
+the system favors \textit{Consistency} over continuous \textit{Availability}, pausing the game to prevent desynchronization.
+The behavior depends on which side of the network is isolated:
 \begin{itemize}
-  \item Is there any \textbf{caching} mechanism?
-  %
-  \begin{itemize}
-    \item \emph{where}? \emph{why}?
-  \end{itemize}
-  
-  \item Is there any form of \textbf{load balancing}?
-  %
-  \begin{itemize}
-    \item \emph{where}? \emph{why}?
-  \end{itemize}
-
-  \item In case of \textbf{network partitioning}, how does the system behave?
-  %
-  \begin{itemize}
-    \item \emph{why}? \emph{how}?
-  \end{itemize}
+    \item \textbf{Server isolation:} if the server lose the connection with the clients,
+    each of them waits 90 seconds until considering the game closed.
+    If the connection is reestablished, then the game restarts for all the client.
+    \item \textbf{Client isolation:} if a client lose the connection with the server,
+    the server stops the game for 30 seconds and waits to reestablish the connection.
+    At the end of the 30 seconds the disconnected player is set as in bankruptcy and the game continues with the other alive players.
 \end{itemize}
+
+Having a single server that orchestrate the game and the connections yields to have a single point of failure.
+This is handled by a set of recovery mechanism as the mechanism seen in section~\ref{fault-tolerance}
+
 
 \subsection{Security}\label{security}
 
-\begin{itemize}
-  \item Is there any form of \textbf{authentication}?
-  %
-  \begin{itemize}
-    \item \emph{where}? \emph{why}?
-  \end{itemize}
+The system implements a token-based authentication, introduced for handle players reconnections,
+avoiding that a different user could take the place of a disconnected player only by using the same nickname.
 
-  \item Is there any form of \textbf{authorization}?
-  %
-  \begin{itemize}
-    \item which sort of \emph{access control}?
-    \item which sorts of users / \emph{roles}? which \emph{access rights}?
-  \end{itemize}
 
-  \item Are \textbf{cryptographic schemas} being used?
-  %
-  \begin{itemize}
-    \item e.g.~token verification,
-    \item e.g.~data encryption, etc.
-  \end{itemize}
-\end{itemize}
+During the joining phase of a client, a UUID token is created and stored in the local filesystem.
+The token is then sent to the server along with his nickname.
+After a disconnection, while reconnecting, the clients checks if there is a saved token and sends it with the nickname to the server.
+
+
+The server stores a pair of token-nickname.
+Once the disconnected player sends another JOIN message, the server checks if the token received is the same of the one stored during
+the first JOIN.
+
+
+There isn't a form of authorization because every user has the same access rights
+
+
+Tokens are stored in clear, without any form of encryption.
+
 
 \section{Implementation}\label{implementation}
 
