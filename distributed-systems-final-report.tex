@@ -314,6 +314,76 @@ The global state of the system encapsulates all the information required to resu
 \end{figure}
 \vspace{0.5cm}
 
+\subsection{Interaction}\label{interaction}
+
+The communication between components is asynchronous and relies on exchanging serialized JSON strings over TCP sockets.
+The interaction architecture avoids peer-to-peer communication: all clients communicate exclusively with the central server.
+
+\subsubsection*{Interaction Patterns}
+The clients never calculate game logic (e.g., they do not compute dice rolls or property costs).
+They strictly send user events and wait.
+The Server is the sole authority that executes the logic and determines the outcome.
+Instead of clients polling the server for updates, the server proactively broadcasts the entire serialized game state to all connected peers every time a mutation occurs.
+Upon receiving a new state, the client's GUI inspects the \texttt{current\_turn\_nickname} and \texttt{allowed\_actions} fields to dynamically determine whether to enable the input buttons for the local user.
+
+
+\subsubsection*{Communication Flow}
+Communication is triggered purely by user inputs (e.g., clicking a button) or connection lifecycle events (e.g., socket closed).
+Clients send lightweight JSON payloads containing an action type (e.g., \texttt{join}, \texttt{ready}, \texttt{roll}) and a payload specifying the actor's nickname and token.
+The server responds by broadcasting the full, heavy JSON representation of the entire Monopoly object, ensuring all clients are perfectly synchronized.
+
+
+\subsubsection*{Sequence Diagram}
+Figure~\ref{fig:sequence_diagram} illustrates the initialization phase (Lobby) and the game loop.
+It highlights how a single client action triggers server-side validation, a local storage checkpoint, and a global state broadcast to all peers.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{figures/sequence_diagram}
+    \caption{Sequence diagram showing the Lobby initialization and the main Game Loop interaction.}
+    \label{fig:sequence_diagram}
+\end{figure}
+
+\subsection{Behaviour}\label{behaviour}
+
+The behavioral flow of the system revolves around the interaction between the Model, the View, and their dedicated Controllers.
+Figure~\ref{fig:state_diagram} illustrates the complete lifecycle of a single user action, from the UI input to the global state broadcast.
+
+\subsubsection*{Individual Component Behavior}
+The components behave differently based on their responsibilities:
+\begin{itemize}
+    \item \textbf{\texttt{Monopoly} (Model) -- Stateful:} It is the core of the system.
+    It maintains the current state of the game in memory.
+    It mutates its internal variables only when invoked by the Server Controller.
+    \item \textbf{\texttt{MonopolyView} (View) -- Stateful:} It holds the visual state of the board but knows nothing about the game logic.
+    It runs an infinite loop waiting for user inputs.
+    \item \textbf{\texttt{Controllers} -- Stateless:} Both the \texttt{ServerController} and \texttt{ClientController} act as pure functions or translators:
+    the Client Controller maps player inputs into events, while the Server Controller maps events into Model method invocations.
+    \item \textbf{\texttt{Serializer} -- Stateless:} It simply transforms objects into JSON strings and vice versa, without holding any memory of past transformations.
+\end{itemize}
+
+\subsubsection*{Updating the State of the System}
+To guarantee strong consistency and prevent cheating, the system enforces a strict rule regarding state updates:
+\begin{itemize}
+    \item Only the \textbf{Server} (specifically the \texttt{Monopoly} Model,
+    orchestrated by the \texttt{ServerController}) is in charge of updating the state of the game.
+    \item The state is updated only when the Server receives a valid event message from a client (e.g., a \texttt{ROLL} or \texttt{BUY} event)
+    or when a system timeout is triggered (e.g., a disconnected player is declared bankrupt).
+    \item When a client terminal (\texttt{MonopolyUser}) captures an input, its controller generates an event dictionary.
+    This event is serialized and sent to the server.
+    The \texttt{ServerController} deserializes the event, manages the input, and asks the Model to check its correctness (e.g., checking if it is actually that player's turn).
+    If valid, the Model computes the action and updates its internal variables.
+    Finally, the Server Controller serializes the new state and sends it back to the clients,
+    where the local controllers update their respective Views.
+\end{itemize}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{figures/state_diagram}
+    \caption{Activity diagram based on the MVC pattern, showing the flow between the Player (Client) and the Bank (Server).}
+    \label{fig:state_diagram}
+\end{figure}
+
 \subsection{Data and Consistency Issues}\label{data-and-consistency-issues}
 
 The only data that needs to be stored are the checkpoint of the model,
@@ -393,7 +463,7 @@ The behavior depends on which side of the network is isolated:
 \end{itemize}
 
 Having a single server that orchestrate the game and the connections yields to have a single point of failure.
-This is handled by a set of recovery mechanism as the mechanism seen in section~\ref{fault-tolerance}
+This is handled by a set of recovery mechanism as the mechanism seen in section~\ref{fault-tolerance}.
 
 
 \subsection{Security}\label{security}
@@ -412,10 +482,8 @@ Once the disconnected player sends another JOIN message, the server checks if th
 the first JOIN.
 
 
-There isn't a form of authorization because every user has the same access rights
-
-
-Tokens are stored in clear, without any form of encryption.
+There isn't a form of authorization because every user has the same access rights,
+and a form of encryption, tokens and checkpoint are stored in clear.
 
 
 \section{Implementation}\label{implementation}
