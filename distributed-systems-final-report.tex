@@ -45,7 +45,7 @@
 
 During the preparation of this work, the author used Gemini to assist in coding the graphical user interface
 with PyGame for the clients, the unit tests and to accelerate the development of some small functions and code refactoring.
-It was not used to design the project's architecture nor to write the final report.
+It was not used to design the project's architecture.
 
 After using this tool/service, 
 the author reviewed and edited the content as needed
@@ -488,52 +488,44 @@ and a form of encryption, tokens and checkpoint are stored in clear.
 
 \section{Implementation}\label{implementation}
 
-Please report here all the implementation (technology-dependent) choices you made while implementing your design.
+This section details the technology-dependent choices adopted to implement the architectural design.
 
-\begin{quote}
-  If you run out of time for this project, you may consider leaving some aspect unimplemented, 
-  and simply discuss how you would have implemented them.
-  %
-  In this case, better would be to discuss unimplemented features in \cref{future-works}.
-\end{quote}
+\subsubsection*{Network Protocols}
+The system's communication is built on top of \textbf{TCP sockets}.
+TCP provides a persistent, reliable, and ordered stream of data.
+The server binds a dedicated socket for each connected client and maintains the connection open for the duration of the session.
+This is ideal for a multiplayer board game where continuous state synchronization is required and packet loss (which could occur with UDP) must be avoided.
 
-\begin{itemize}
-  \item which \textbf{network protocols} to use?
-  %
-  \begin{itemize}
-    \item e.g.~UDP, TCP, HTTP, WebSockets, gRPC, XMPP, AMQP, MQTT, etc.
-  \end{itemize}
-  
-  \item how should \emph{in-transit data} be \textbf{represented}?
-  %
-  \begin{itemize}
-    \item e.g.~JSON, XML, YAML, Protocol Buffers, etc.
-  \end{itemize}
-  
-  \item how should \emph{databases} be \textbf{queried}?
-  %
-  \begin{itemize}
-    \item e.g.~SQL, NoSQL, etc.
-  \end{itemize}
-  
-  \item how should components be \emph{authenticated}?
-  %
-  \begin{itemize}
-    \item e.g.~OAuth, JWT, etc.
-  \end{itemize}
+\subsubsection*{In-Transit Data Representation}
+Messages exchanged between the server and clients are encoded in \textbf{JSON} format.
+JSON was chosen because it's easy to parse and generate Python object.
+A custom serializer and deserializer were implemented in order to parse the objects in a JSON format and reconstruct them from JSON to Python objects.
 
-  \item how should components be \emph{authorized}?
-  %
-  \begin{itemize}
-    \item e.g.~RBAC, ABAC, etc.
-  \end{itemize}
-\end{itemize}
+\subsubsection*{Database and Querying}
+The system does not have a traditional relational (SQL) or NoSQL database.
+Instead, it relies on the local filesystem.
+The checkpoint is saved directly as a JSON file (\texttt{autosave.json}).
+Consequently, there is no formal query language involved,
+the system performs direct I/O reads and writes to dump or load the entire game state and players token.
+
+\subsubsection*{Authentication}
+The system implements a lightweight custom \textbf{Token-based Authentication} for session recovery.
+Upon the first connection, a standard UUID is generated.
+This token is saved in clear text on the client's machine and mapped alongside the checkpoint dictionary on the server.
+Reconnecting clients must provide this exact UUID to prove their identity and reclaim their seat.
+
+\subsubsection*{Authorization}
+All users have the exact same role (``Player'').
+The only type of authorization implemented in the system is made using the nicknames that
+the server uses to checks in the internal game state before authorizing any state-mutating command,
+ensuring that players can only interact when it is legally their turn.
 
 \subsection{Technological details}\label{technological-details}
 
-\begin{itemize}
-  \item any particular \emph{framework} / \emph{technology} being exploited goes here
-\end{itemize}
+The system is entirely developed in Python 3.
+The framework used for the client's View is PyGame that provides the rendering engine for drawing the board, managing the game loop,
+and capturing hardware events (such as mouse clicks for the action buttons).
+
 
 \section{Validation}\label{validation}
 
