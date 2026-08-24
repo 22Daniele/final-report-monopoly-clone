@@ -558,28 +558,75 @@ The standard game loop (joining, rolling, buying, ending turns) was tested focus
   \end{itemize}
 
 These tests have been done manually because the client is tightly coupled with \texttt{PyGame}.
-Verify that UI elements (tokens, action buttons, properties) are rendered at the correct coordinates
+Verifying that UI elements (tokens, action buttons, properties) are rendered at the correct coordinates
 and respond to hardware mouse events is particularly complex.
 Furthermore, simulating TCP connections, physical network drops, socket timeouts across multiple nodes would have added
 more complexity if tested automatically.
 
 \section{Deployment}\label{deployment}
 
-\begin{itemize}
-  \item should one install your software from scratch, how to do it?
-  %
-  \begin{itemize}
-    \item provide instructions
-    \item provide expected outcomes
-  \end{itemize}
+To prepare the environment to run the system locally,
+there are three main steps: cloning the repository, setting up the server (via Docker or locally), and starting the client terminals.
 
-  \item what software should be installed on the machines to run your project? which versions?
-  
-  \item should one set environment variables or configuration files?
-  
-  \item if you're using containerization (e.g.~Docker), 
-  describe how you engineered your deployment scrips (e.g. \texttt{docker-compose.yml} files)
+\subsubsection*{Prerequisites and Software Versions}
+To run the project, the following software must be installed on the host machines:
+\begin{itemize}
+    \item \textbf{Python:} Version \texttt{3.10} or higher.
+    \item \textbf{Dependencies:} The project requires two external libraries,
+    specified in the \texttt{requirements.txt} file: \texttt{pygame>=2.0.0} (for the client GUI)
+    and \texttt{psutil>=5.0.0} (for server network utilities).
+    \item \textbf{Docker \& Docker Compose} (Optional for the server deployment).
 \end{itemize}
+
+\subsubsection*{Containerization (Server)}
+The \texttt{MonopolyBank} server is fully containerized.
+\begin{itemize}
+    \item \textbf{Dockerfile:} It starts from a lightweight \texttt{python:3.10-slim} image.
+    It copies the \texttt{requirements.txt} first to leverage Docker's layer caching during the \texttt{pip install} phase.
+    \item \textbf{Docker Compose:} The \texttt{docker-compose.yml} maps the container's exposed port to the host's port (\texttt{8080:8080}).
+    It maps a local volume (\texttt{./checkpointing:/app/checkpointing}).
+    This choice ensures that the \texttt{autosave.json} checkpoint file persists on the host machine even if the container
+    is stopped or destroyed, guaranteeing fault tolerance.
+\end{itemize}
+
+\subsubsection*{Step-by-Step Installation Instructions}
+
+\begin{enumerate}
+    \item \textbf{Clone the Repository:}
+    Open a terminal and clone the project source code.
+    \begin{verbatim}
+    git clone https://github.com/22Daniele/DS-monopoly-clone
+    cd dmonopoly
+    \end{verbatim}
+
+    \item \textbf{Start the Server:}
+    You can run the server using Docker Compose:
+    \begin{verbatim}
+    docker-compose up --build
+    \end{verbatim}
+    \textit{Expected Outcome:} Docker will build the image and the server will begin listening on port 8080.
+    \\
+    Alternatively, to run it locally without Docker:
+    \begin{verbatim}
+    pip install -r requirements.txt
+    python serverMain.py
+    \end{verbatim}
+
+    \item \textbf{Start the Clients:}
+    On the players' machines, ensure Python is installed, then install the requirements and launch the client script.
+    \begin{verbatim}
+    pip install -r requirements.txt
+    python clientMain.py <SERVER_IP> <PORT> <NICKNAME>
+    \end{verbatim}
+    \textit{Expected Outcome:} A PyGame graphical window will open, presenting the initial Lobby screen.
+    The CLI will log the successful connection to the server or display a rejection message if the lobby is full.
+\end{enumerate}
+
+\subsubsection*{Environment Variables and Configuration}
+No external \texttt{.env} files or configuration files are required.
+The server automatically creates the \texttt{checkpointing} directory,
+and the clients automatically generate the \texttt{tokens} directory upon their first launch.
+Network configurations (like dynamic IP resolution) are handled internally by the code via the \texttt{psutil} library.
 
 \section{User Guide}\label{user-guide}
 
