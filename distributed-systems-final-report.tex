@@ -531,45 +531,37 @@ and capturing hardware events (such as mouse clicks for the action buttons).
 
 \subsection{Automatic Testing}\label{automatic-testing}
 
+The core of the model has been tested automatically, along with serialization and deserialization.
+
+Individual components that do not rely on active network sockets or GUI rendering were unit-tested using the \textbf{\texttt{pytest}} framework.
+The primary targets were:
 \begin{itemize}
-  \item how were individual components \textbf{\emph{unit}-test}ed?
-  
-  \item how was communication, interaction, and/or integration among components tested?
-  
-  \item how to \textbf{\emph{end-to-end}-test} the system?
-  %
-  \begin{itemize}
-    \item e.g.~production vs.~test environment
-  \end{itemize}
-
-  \item for each test specify:
-  %
-  \begin{itemize}
-    \item rationale of individual tests
-    \item how were the test automated
-    \item how to run them
-    \item which requirement they are testing, if any
-  \end{itemize}
+    \item \textbf{Model}: main entities were tested on different scenarios for every game phase (\texttt{LOBBY}, \texttt{PLAYING}, \texttt{CLOSED}, \texttt{PAUSED}),
+                            with different number of players, and on player disconnection and reconnection.
+    \item \textbf{Data Serialization:} \texttt{Serializer} and \texttt{Deserializer} were tested on each entity,
+                                        on the full game state and on unsupported data.
 \end{itemize}
-
-\begin{quote}
-recall that \emph{deployment} \textbf{automation} is commonly used to \emph{test} the system in \emph{production-like} environment
-\end{quote}
-
-\begin{quote}
-recall to test corner cases (crashes, errors, etc.)
-\end{quote}
 
 \subsection{Acceptance test}\label{acceptance-test}
+To validate the overall user experience, the system has been tested through an extensive manual acceptance testing.
 
-\begin{itemize}
-  \item did you perform any \emph{manual} testing?
-  %
+The system has been tested on the communication, interaction, and integration among all components across a Local Area Network (LAN).
+The setup involved deploying the \texttt{MonopolyBank} server on one physical machine and connecting multiple \texttt{MonopolyUser} clients from different or same hosts.
+The standard game loop (joining, rolling, buying, ending turns) was tested focusing also on corner cases and fault-tolerance mechanisms:
   \begin{itemize}
-    \item what did you test?
-    \item why wasn't it automatic?
+      \item \textit{Network Partitions:} Unexpected client disconnections (e.g., physically disabling a machine's Wi-Fi adapter) were simulated
+                    to verify the 30-second timeout and the subsequent bankruptcy logic.
+      \item \textit{Crash Recovery:} Server process were forcefully killed to ensure the \texttt{autosave.json} checkpoint
+                    was correctly generated and capable of restoring the paused game state upon server reboot.
+      \item \textit{Security Authentication:} Reconnections were tested verifying that dropped players could successfully
+                    rejoin using their local UUID tokens, and that unauthorized connections were correctly rejected.
   \end{itemize}
-\end{itemize}
+
+These tests have been done manually because the client is tightly coupled with \texttt{PyGame}.
+Verify that UI elements (tokens, action buttons, properties) are rendered at the correct coordinates
+and respond to hardware mouse events is particularly complex.
+Furthermore, simulating TCP connections, physical network drops, socket timeouts across multiple nodes would have added
+more complexity if tested automatically.
 
 \section{Deployment}\label{deployment}
 
