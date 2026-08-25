@@ -431,7 +431,7 @@ it cannot be used to restore a lost or corrupted data.
 Tokens must be consistent in order to guarantee a right form of authentication during a client reconnection,
 otherwise if one of the file is corrupted the authentication can fail and an allowed user cannot rejoin the game.
 
-\subsubsection{Timeouts and Retry Mechanisms}
+\subsubsection{Timeouts and Retry Mechanisms}\label{recovery}
 The system implements timeout and retry loops to handle temporary network failures, preventing immediate game disruption:
 \begin{itemize}
     \item \textbf{Server:} once the server lose connection a 90-second timeout starts.
@@ -589,7 +589,7 @@ The \texttt{MonopolyBank} server is fully containerized.
     is stopped or destroyed, guaranteeing fault tolerance.
 \end{itemize}
 
-\subsubsection*{Step-by-Step Installation Instructions}
+\subsubsection*{Step-by-Step Installation and Startup Instructions}\label{installation}
 
 \begin{enumerate}
     \item \textbf{Clone the Repository:}
@@ -621,6 +621,13 @@ The \texttt{MonopolyBank} server is fully containerized.
     \textit{Expected Outcome:} A PyGame graphical window will open, presenting the initial Lobby screen.
     The CLI will log the successful connection to the server or display a rejection message if the lobby is full.
 \end{enumerate}
+\vspace{0.5cm}
+\noindent\textbf{Important Note on Docker:} \\
+If the server is deployed using Docker, the IP address automatically detected and printed in the server's console logs is the
+Docker's internal virtual network rather than the host machine's actual IP.
+When connecting clients from different physical machines, users must ignore the internal Docker IP and instead provide
+the host machine's real IP address as the connection endpoint.
+
 
 \subsubsection*{Environment Variables and Configuration}
 No external \texttt{.env} files or configuration files are required.
@@ -629,6 +636,69 @@ and the clients automatically generate the \texttt{tokens} directory upon their 
 Network configurations (like dynamic IP resolution) are handled internally by the code via the \texttt{psutil} library.
 
 \section{User Guide}\label{user-guide}
+This section is a guide on how to interact with the Monopoly system once the deployment steps
+(described in Section~\ref{deployment}) have been completed.
+
+\subsubsection{LOBBY phase}
+During this phase, clients (up to 4) can join the game and press the ready button shown on the GUI.
+Once all the player in the lobby (at least 2) are ready, the game enters in the next phase.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth]{figures/lobby}
+    \caption{The client GUI during the LOBBY phase.}
+    \label{fig:gui_lobby}
+\end{figure}
+
+\subsubsection{PLAYING phase}
+In this phase the monopoly match starts, every player is initialized with a balance of 5000 coins and 5 random properties.
+Players should see the board on the left of the window and a dashboard showing players information and last event log on the right.
+Each player in turn can see and press on their screen buttons to perform actions
+\begin{itemize}
+    \item \textbf{Your Turn:} When it is your turn, the GUI dynamically enables action buttons (e.g., \texttt{ROLL}, \texttt{BUY}, \texttt{BUILD}, \texttt{END\_TURN}).
+    Click these buttons to perform your allowed moves.
+    The action is processed by the server, and the game information on the GUI updates for everyone.
+    \item \textbf{Others' Turn:} When it is not your turn, no actions are allowed.
+    The action buttons are hidden or disabled.
+    You act as a spectator, watching the real-time updates triggered by the active player.
+\end{itemize}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{figures/playing}
+    \caption{The game interface during the PLAYING phase.}
+    \label{fig:gui_playing}
+\end{figure}
+
+\subsubsection{PAUSED phase}
+If a client loses the connection mid-game, the system enters the PAUESED phase,
+stopping immediately the game and starting the recovery mechanism~\ref{recovery}.
+During this phase all the players can do nothing.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{figures/paused}
+    \caption{The game interface during the PAUSED phase.}
+    \label{fig:gui_paused}
+\end{figure}
+
+\subsubsection{CLOSED phase}
+The game ends when only one active player is left (i.e., everyone else is bankrupt or has permanently disconnected) and enters in the CLOSED phase.
+The winner is implicitly declared, and no further actions can be performed by the users.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{figures/closed}
+    \caption{The game interface during the CLOSED phase.}
+    \label{fig:gui_closed}
+\end{figure}
+
+\subsubsection{Shutting Down the System}
+\begin{itemize}
+    \item \textbf{Clients:} Users can gracefully leave the game at any time simply by closing the PyGame window.
+    \item \textbf{Server:} Once all clients have disconnected and the game is empty, the Python server process shuts down automatically.
+    However, if the server was started via \texttt{docker-compose}, the Docker daemon will automatically restart it,
+    immediately readying the system to host a new game session.
+\end{itemize}
 
 \begin{itemize}
   \item how to use your software?
