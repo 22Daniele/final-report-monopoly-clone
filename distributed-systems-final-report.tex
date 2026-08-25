@@ -4,6 +4,7 @@
 \usepackage{url}
 \usepackage{natbib}
 \usepackage{graphicx}
+\usepackage{float}
 \usepackage{cleveref} % this must be the last package to be loaded
 
 \newcommand{\emailaddr}[1]{\href{mailto:#1}{\texttt{#1}}}
@@ -257,7 +258,7 @@ The system relies on explicit endpoint provisioning:
 \end{enumerate}
 
 \vspace{0.5cm}
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{figures/components}
     \caption{Component diagram of the Monopoly system with two players.}
@@ -306,7 +307,7 @@ The global state of the system encapsulates all the information required to resu
 \end{itemize}
 
 \vspace{0.5cm}
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{figures/model_diagram}
     \caption{Class diagram of the model's main components.}
@@ -337,7 +338,7 @@ The server responds by broadcasting the full, heavy JSON representation of the e
 Figure~\ref{fig:sequence_diagram} illustrates the initialization phase (Lobby) and the game loop.
 It highlights how a single client action triggers server-side validation, a local storage checkpoint, and a global state broadcast to all peers.
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{figures/sequence_diagram}
     \caption{Sequence diagram showing the Lobby initialization and the main Game Loop interaction.}
@@ -377,7 +378,7 @@ To guarantee strong consistency and prevent cheating, the system enforces a stri
     where the local controllers update their respective Views.
 \end{itemize}
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{figures/state_diagram}
     \caption{Activity diagram based on the MVC pattern, showing the flow between the Player (Client) and the Bank (Server).}
@@ -639,17 +640,17 @@ Network configurations (like dynamic IP resolution) are handled internally by th
 This section is a guide on how to interact with the Monopoly system once the deployment steps
 (described in Section~\ref{deployment}) have been completed.
 
-\subsubsection{LOBBY phase}
+\subsection{LOBBY phase}
 During this phase, clients (up to 4) can join the game and press the ready button shown on the GUI.
 Once all the player in the lobby (at least 2) are ready, the game enters in the next phase.
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.7\textwidth]{figures/lobby}
     \caption{The client GUI during the LOBBY phase.}
     \label{fig:gui_lobby}
 \end{figure}
 
-\subsubsection{PLAYING phase}
+\subsection{PLAYING phase}
 In this phase the monopoly match starts, every player is initialized with a balance of 5000 coins and 5 random properties.
 Players should see the board on the left of the window and a dashboard showing players information and last event log on the right.
 Each player in turn can see and press on their screen buttons to perform actions
@@ -662,37 +663,37 @@ Each player in turn can see and press on their screen buttons to perform actions
     You act as a spectator, watching the real-time updates triggered by the active player.
 \end{itemize}
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{figures/playing}
     \caption{The game interface during the PLAYING phase.}
     \label{fig:gui_playing}
 \end{figure}
 
-\subsubsection{PAUSED phase}
+\subsection{PAUSED phase}
 If a client loses the connection mid-game, the system enters the PAUESED phase,
 stopping immediately the game and starting the recovery mechanism~\ref{recovery}.
 During this phase all the players can do nothing.
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{figures/paused}
     \caption{The game interface during the PAUSED phase.}
     \label{fig:gui_paused}
 \end{figure}
 
-\subsubsection{CLOSED phase}
+\subsection{CLOSED phase}
 The game ends when only one active player is left (i.e., everyone else is bankrupt or has permanently disconnected) and enters in the CLOSED phase.
 The winner is implicitly declared, and no further actions can be performed by the users.
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{figures/closed}
     \caption{The game interface during the CLOSED phase.}
     \label{fig:gui_closed}
 \end{figure}
 
-\subsubsection{Shutting Down the System}
+\subsection{Shutting Down the System}
 \begin{itemize}
     \item \textbf{Clients:} Users can gracefully leave the game at any time simply by closing the PyGame window.
     \item \textbf{Server:} Once all clients have disconnected and the game is empty, the Python server process shuts down automatically.
