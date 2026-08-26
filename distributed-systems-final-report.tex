@@ -309,7 +309,7 @@ The global state of the system encapsulates all the information required to resu
 \vspace{0.5cm}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.6\textwidth]{figures/model_diagram}
+    \includegraphics[width=0.7\textwidth]{figures/model_diagram}
     \caption{Class diagram of the model's main components.}
     \label{fig:model class diagram}
 \end{figure}
@@ -340,7 +340,7 @@ It highlights how a single client action triggers server-side validation, a loca
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\textwidth]{figures/sequence_diagram}
+    \includegraphics[width=0.7\textwidth]{figures/sequence_diagram}
     \caption{Sequence diagram showing the Lobby initialization and the main Game Loop interaction.}
     \label{fig:sequence_diagram}
 \end{figure}
@@ -380,7 +380,7 @@ To guarantee strong consistency and prevent cheating, the system enforces a stri
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{figures/state_diagram}
+    \includegraphics[width=0.9\textwidth]{figures/state_diagram}
     \caption{Activity diagram based on the MVC pattern, showing the flow between the Player (Client) and the Bank (Server).}
     \label{fig:state_diagram}
 \end{figure}
@@ -701,25 +701,39 @@ The winner is implicitly declared, and no further actions can be performed by th
     immediately readying the system to host a new game session.
 \end{itemize}
 
-\begin{itemize}
-  \item how to use your software?
-  %
-  \begin{itemize}
-    \item provide instructions
-    \item provide expected outcomes
-    \item provide screenshots if possible
-  \end{itemize}
-\end{itemize}
-
 \section{Self-evaluation}\label{self-evaluation}
+The system was completely designed and implemented individually by Daniele Loverre.
 
+\subsubsection*{Strengths}
 \begin{itemize}
-  \item An individual section is required for each member of the group
-  \item Each member must self-evaluate their work, listing the strengths and weaknesses of the product
-  \item Each member must describe their role within the group as objectively as possible.
+    \item \textbf{Fault Tolerance:} The system handles sudden crashes and network drops effectively.
+    The checkpointing and timeout mechanisms ensure that the game can be easily recovered without any data loss.
+    \item \textbf{Decoupled Architecture:} The architecture was structured to be lightweight and reusable,
+    strictly decoupling the network layer from the Model and the View.
+    \item \textbf{Anti-Cheating Design:} Having the clients act solely as passive renderers of the View keeps the system safe from cheating,
+    allowing players to only perform legally allowed actions.
+    \item \textbf{Network Reliability and Efficiency:} The use of TCP sockets makes the connections
+    more reliable and makes it easier to detect connection drops.
+    Furthermore, the client-server architecture keeps the network lightweight for each client,
+    which only needs a single connection with the server (avoiding the network overload of a peer-to-peer mesh).
+    The messages exchanged are small and fast, allowing the server to instantly broadcast the game state to all connected clients.
 \end{itemize}
 
-It should be noted that each student is only responsible for their own section.
+\subsubsection*{Weaknesses of the product}
+\begin{itemize}
+    \item \textbf{Single Point of Failure:} Having the server as the single coordinator of the game introduces a Single Point of Failure.
+    Even though a recovery mechanism is implemented, if the server fails and cannot be restarted to reestablish connections
+    within the 90-second client timeout, the current game session is lost and there is no way to restore the game state.
+    \item \textbf{Manual Network Discovery:} When connecting across different physical machines,
+    especially if the server is hosted via Docker, users must manually look up and input the host's IP address,
+    which makes finding the server less user-friendly.
+    \item \textbf{Limited Security:} Security is limited as a trade-off for simplicity and performance.
+    Authentication tokens are stored in clear text, and TCP payloads are unencrypted.
+    \item \textbf{Static GUI:} The graphical user interface is extremely simple and lacks dynamic responsiveness to different monitor resolutions or window resizing.
+    \item \textbf{Automated Test Coverage:} Another weakness is the limited scope of automated testing.
+    Only the core domain logic and serializers are covered by automated unit tests.
+    The integration and network behaviors were tested manually, potentially leaving some rare game configurations or edge cases untested.
+\end{itemize}
 
 \section{Future works}\label{future-works}
 
