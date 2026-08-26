@@ -226,6 +226,23 @@ This choice was made to ensure different requirements and features identified in
     The Client-Server model drastically reduces network overhead and algorithmic complexity.
 \end{itemize}
 
+The system's design is a mix of a \textbf{3-Tier Architecture} with an \textbf{Event-Based Architecture}.
+
+
+The system is logically and physically divided into three distinct tiers:
+\begin{itemize}
+    \item \textbf{Client (Presentation Tier):} Responsible exclusively for the user interface (\texttt{PyGame}).
+    \item \textbf{Server (Application/Logic Tier):} It contains the game logic and acts as the authoritative coordinator.
+    \item \textbf{Filesystem (Data Tier):} The components interact directly with the local file system to store information.
+\end{itemize}
+
+
+The communication between the components is inherently \textbf{event-driven}.
+The Server does not run a continuous computation loop, instead it waits passively for network events or system events.
+Once an event is received, it triggers a state mutation on the Application Tier,
+which generates a reactive broadcast event (the updated JSON state) sent back to the Presentation Tier.
+
+
 \subsection{Infrastructure}\label{infrastructure}
 
 The system architecture follows a classic Client-Server model.
