@@ -737,11 +737,22 @@ The system was completely designed and implemented individually by Daniele Lover
 
 \section{Future works}\label{future-works}
 
-Discuss possible future works, improvements, extensions, optimizations, etc.
-
-Also discuss here any unimplemented feature, and how you would have implemented it.
-
-\bibliographystyle{plain}
-\bibliography{references}
+Possible future work and improvements could be:
+\begin{itemize}
+    \item web-based interface: \textbf{Web-Based Client Interface:} Replacing the current \texttt{PyGame} desktop GUI with a web-based frontend.
+    This would improve the user experience by providing responsive design across different devices
+    and removing the need for local installations, simplifying the deployment process.
+    \item \textbf{Removing the Single Point of Failure (SPOF):} As discussed in Section~\ref{self-evaluation},
+    the current architecture relies on a single authoritative server.
+    A more robust and highly available setup would involve deploying multiple server nodes behind a Load Balancer,
+    and a distributed ledger so that if one server node crashes, another can seamlessly pick up the ongoing session.
+    \item \textbf{Concurrent Game Sessions (Matchmaking):} The current system hosts a single game at a time.
+    An extension would be upgrading the server into a central hub where users can create and join multiple concurrent
+    public or private game rooms (lobbies), each running as an isolated game thread.
+    \item \textbf{Account Management System:} Integrating a database to handle proper user accounts.
+    This would allow players to register with a username and password, keeping track of their game history, win rates, and friends lists.
+    Consequently, a more robust authentication and authorization mechanism would replace the current one.
+    \item \textbf{Strengthened Security:} Introducing a layer of encryption on exchanged data and saved files on both server and client sides.
+\end{itemize}
 
 \end{document}
