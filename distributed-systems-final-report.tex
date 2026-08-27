@@ -77,8 +77,8 @@ Once all the players in the \textit{lobby} are ready (at least 2 players)
 the game starts, 5000 coins and 5 random properties are assigned to each player.
 Following their turn, players can make actions that are sent to the server and updates the game state.
 The updated state is sent back to all the players.
-The game continues until only one players remains without going in \textit{bankruptcy}
-or until all the players left the game.
+The game continues until only one player remains without going in \textit{bankruptcy}
+or until all the players leave the game.
 
 
 Distribution is needed in this project to allow geographical distribution between nodes,
@@ -326,7 +326,7 @@ The global state of the system encapsulates all the information required to resu
 \vspace{0.5cm}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\textwidth]{figures/model_diagram}
+    \includegraphics[width=0.9\textwidth]{figures/model_diagram}
     \caption{Class diagram of the model's main components.}
     \label{fig:model class diagram}
 \end{figure}
@@ -339,16 +339,20 @@ The interaction architecture avoids peer-to-peer communication: all clients comm
 
 \subsubsection*{Interaction Patterns}
 The clients never calculate game logic (e.g., they do not compute dice rolls or property costs).
-They strictly send user events and wait.
+They only send user events and wait.
 The Server is the sole authority that executes the logic and determines the outcome.
-Instead of clients polling the server for updates, the server proactively broadcasts the entire serialized game state to all connected peers every time a mutation occurs.
-Upon receiving a new state, the client's GUI inspects the \texttt{current\_turn\_nickname} and \texttt{allowed\_actions} fields to dynamically determine whether to enable the input buttons for the local user.
+Instead of clients polling the server for updates, the server proactively broadcasts the entire
+serialized game state to all connected peers every time a mutation occurs.
+Upon receiving a new state, the client's GUI inspects the \texttt{current\_turn\_nickname} and \texttt{allowed\_actions} fields
+to dynamically determine whether to enable the input buttons for the local user.
 
 
 \subsubsection*{Communication Flow}
-Communication is triggered purely by user inputs (e.g., clicking a button) or connection lifecycle events (e.g., socket closed).
-Clients send lightweight JSON payloads containing an action type (e.g., \texttt{join}, \texttt{ready}, \texttt{roll}) and a payload specifying the actor's nickname and token.
-The server responds by broadcasting the full, heavy JSON representation of the entire Monopoly object, ensuring all clients are perfectly synchronized.
+Communication is triggered by user inputs (e.g., clicking a button) or connection lifecycle events (e.g., socket closed).
+Clients send lightweight JSON payloads containing an action type (e.g., \texttt{join}, \texttt{ready}, \texttt{roll})
+and a payload specifying the player's nickname and token.
+The server responds by broadcasting the full JSON representation of the entire Monopoly object,
+ensuring all clients are perfectly synchronized.
 
 
 \subsubsection*{Sequence Diagram}
@@ -770,5 +774,6 @@ Possible future work and improvements could be:
     This would allow players to register with a username and password, keeping track of their game history, win rates, and friends lists.
     Consequently, a more robust authentication and authorization mechanism would replace the current one.
     \item \textbf{Strengthened Security:} Introducing a layer of encryption on exchanged data and saved files on both server and client sides.
+    \item \textbf{Adding game feature:} The system implements only few feature of the real board game, a lot of feature can be added to make the game complete.
 \end{itemize}
 \end{document}
