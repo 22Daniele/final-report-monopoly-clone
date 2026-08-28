@@ -464,6 +464,12 @@ The system implements timeout and retry loops to handle temporary network failur
     The player is set to \texttt{"bankruptcy"} once the timeout ends.
 \end{itemize}
 
+\subsubsection{Network Partitions and Heartbeat Mechanism}
+On network drops, the system implements an application-level \textbf{Heartbeat} mechanism coupled
+with a 5-second socket timeout on the \texttt{recv()} function.
+Active clients send a lightweight \texttt{"ping"} message every 2 seconds in the background.
+The server intercepts these messages and immediately replies with a \texttt{"pong"}, without interfering with the game logic.
+If a silent drop occurs, the 5-second timeout triggers a socket exception, immediately starting the standard disconnection protocol.
 
 \subsubsection{Error handling}
 The system uses TCP sockets for connections, so if a message fails to reach the peer, the exception is caught and the retry mechanisms starts.
@@ -575,6 +581,9 @@ The standard game loop (joining, rolling, buying, ending turns) was tested focus
                     to verify the 30-second timeout and the subsequent bankruptcy logic.
       \item \textit{Crash Recovery:} Server process were forcefully killed to ensure the \texttt{autosave.json} checkpoint
                     was correctly generated and capable of restoring the paused game state upon server reboot.
+      \item \textit{Network Partitions:} Unexpected client and server disconnections were simulated.
+                    The system successfully detected the network partition within 5 seconds thanks to the Heartbeat mechanism,
+                    triggering the dynamic 30-second or 90-second timeouts and the subsequent recovery or bankruptcy logic.
       \item \textit{Security Authentication:} Reconnections were tested verifying that dropped players could successfully
                     rejoin using their local UUID tokens, and that unauthorized connections were correctly rejected.
   \end{itemize}
@@ -618,7 +627,7 @@ The \texttt{MonopolyBank} server is fully containerized.
     Open a terminal and clone the project source code.
     \begin{verbatim}
     git clone https://github.com/22Daniele/DS-monopoly-clone
-    cd dmonopoly
+    cd DS-monopoly-clone/dmonopoly
     \end{verbatim}
 
     \item \textbf{Start the Server:}
